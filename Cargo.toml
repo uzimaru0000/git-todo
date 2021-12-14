@@ -22,7 +22,7 @@ exclude = [
 
 [dependencies]
 anyhow = "1.0.48"
-clap = "2.33.3"
+clap = { version = "3.0.0-rc.4", features = ["derive"] }
 combine = "4.6.2"
 git2 = "0.13.24"
 tokio = "1.14.0"
