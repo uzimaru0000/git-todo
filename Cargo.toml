@@ -1,0 +1,28 @@
+[package]
+name = "git-todo"
+version = "0.0.1"
+edition = "2018"
+authors = ["uzimaru0000 <shuji365630@gmail.com>"]
+description = "git todo"
+homepage = "https://github.com/uzimaru0000/git-todo"
+keywords = [
+    "git",
+    "tool",
+]
+readme = "README.md"
+license = "MIT"
+repository = "https://github.com/uzimaru0000/git-todo"
+exclude = [
+    ".github/*",
+    "scripts/*",
+    "cliff.toml"
+]
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[dependencies]
+anyhow = "1.0.48"
+clap = "2.33.3"
+combine = "4.6.2"
+git2 = "0.13.24"
+tokio = "1.14.0"
