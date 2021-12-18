@@ -1,8 +1,9 @@
-use std::{env, fs::OpenOptions, io::Write};
+use std::{fs::OpenOptions, io::Write};
 
 use anyhow::Result;
 use clap::Parser;
-use git2::Repository;
+
+use crate::repo::{open_repo, open_todo_file};
 
 use super::Cmd;
 
@@ -15,14 +16,11 @@ pub struct AddCmd {
 
 impl Cmd for AddCmd {
     fn run(&self) -> Result<()> {
-        let path = env::current_dir()?;
-        let repo = Repository::open(path)?;
+        let repo = open_repo()?;
 
-        let todo_path = repo.path().join("TODO");
-        let mut todo_file = OpenOptions::new()
-            .append(true)
-            .create(true)
-            .open(todo_path)?;
+        let mut opt = OpenOptions::new();
+        opt.append(true).create(true);
+        let mut todo_file = open_todo_file(&repo, &mut opt)?;
 
         todo_file.write(self.title.as_bytes())?;
         todo_file.write(b"\n")?;

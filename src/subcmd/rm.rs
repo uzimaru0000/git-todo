@@ -1,15 +1,12 @@
-use std::{
-    env,
-    fs::{File, OpenOptions},
-    io::{Read, Write},
-    path::PathBuf,
-};
+use std::{collections::HashMap, fs::OpenOptions, io::Read};
 
 use anyhow::Context;
 use clap::Parser;
-use git2::Repository;
 
-use crate::todo::Todo;
+use crate::{
+    repo::{open_repo, open_todo_file},
+    todo::{Todo, TodoList},
+};
 
 use super::Cmd;
 
@@ -22,21 +19,12 @@ pub struct RemoveCmd {
     all: bool,
 }
 
-impl RemoveCmd {
-    fn clear(path: &PathBuf) -> anyhow::Result<File> {
-        let file = OpenOptions::new().write(true).truncate(true).open(path)?;
-        Ok(file)
-    }
-}
-
 impl Cmd for RemoveCmd {
     fn run(&self) -> anyhow::Result<()> {
-        let path = env::current_dir()?;
-        let repo = Repository::open(path)?;
-        let todo_path = repo.path().join("TODO");
+        let repo = open_repo()?;
 
         if self.all {
-            Self::clear(&todo_path)?;
+            TodoList(HashMap::new()).write_file(&repo)?;
             return Ok(());
         }
 
@@ -44,25 +32,16 @@ impl Cmd for RemoveCmd {
             .id
             .with_context(|| "error: The following required arguments were not provided: <ID>")?;
 
-        let mut todo_file = OpenOptions::new().read(true).open(&todo_path)?;
+        let mut opt = OpenOptions::new();
+        opt.read(true);
+        let mut todo_file = open_todo_file(&repo, &mut opt)?;
 
         let mut content = String::new();
         todo_file.read_to_string(&mut content)?;
 
         let mut todos = Todo::prase(&content);
-        todos
-            .remove(&id)
-            .with_context(|| format!("{} is not found", id))?;
-
-        let mut todo_file = Self::clear(&todo_path)?;
-        let mut todos = todos.into_iter().collect::<Vec<_>>();
-        todos.sort_by(|x, y| x.0.cmp(&y.0));
-        let todo_data = todos
-            .into_iter()
-            .map(|(_, x)| x.title)
-            .collect::<Vec<_>>()
-            .join("\n");
-        todo_file.write_all(todo_data.as_bytes())?;
+        todos.remove(id)?;
+        todos.write_file(&repo)?;
 
         Ok(())
     }
